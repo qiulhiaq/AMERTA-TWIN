@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AMERTA-TWIN · Hydro-Command Center</title>
+<script src="https://cdn.tailwindcss.com/3.4.17"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+body{background:#080d13;background-image:linear-gradient(#0e1722 1px,transparent 1px),linear-gradient(90deg,#0e1722 1px,transparent 1px);background-size:32px 32px;color:#cbd5e1;font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+.p{background:#0f1923;border:1px solid #1e3042;border-radius:4px}
+.k{background:#0b141d;border:1px solid #1e3042;border-left:3px solid #22d3ee;padding:.6rem .8rem}
+.k b{display:block;font-size:1.35rem;color:#e2e8f0}.k span{font-size:.66rem;letter-spacing:.08em;text-transform:uppercase;color:#7c93a8}.k i{font-size:.68rem;color:#7c93a8;font-style:normal}
+.tab{padding:.5rem .9rem;border:1px solid #1e3042;font-size:.75rem;letter-spacing:.06em;text-transform:uppercase;color:#7c93a8;background:#0b141d}
+.tab.on{color:#22d3ee;border-color:#22d3ee;background:#0f2430}
+.btn{padding:.35rem .7rem;border:1px solid #2a4157;font-size:.75rem;background:#0b141d;color:#9fb3c6}
+.btn.on{background:#0e3a4a;border-color:#22d3ee;color:#e2fbff}
+.lv{padding:.7rem 1rem;border:2px solid;font-weight:700;letter-spacing:.06em}
+.ok{color:#34d399}.wa{color:#f59e0b}.er{color:#f87171}
+input[type=range]{width:100%;accent-color:#22d3ee}
+h2{font-size:.8rem;letter-spacing:.12em;text-transform:uppercase;color:#22d3ee}
+.mod{display:none}.mod.on{display:block}
+td,th{padding:.4rem .6rem;border-bottom:1px solid #1e3042;text-align:left;font-size:.78rem}
+</style>
+</head>
+<body class="min-h-screen p-3 md:p-6">
+<header class="flex flex-wrap items-center justify-between gap-3 mb-4">
+  <div>
+    <div class="text-xs tracking-widest text-cyan-400">PERUM JASA TIRTA I · WS BRANTAS · KBAI 2027</div>
+    <h1 class="text-2xl md:text-3xl font-bold text-slate-100">AMERTA-TWIN <span class="text-cyan-400">Hydro-Command Center</span></h1>
+    <div class="text-xs text-slate-500">Prototipe dashboard · Sutami · Lahor · Selorejo · FPV 100 MWp</div>
+  </div>
+  <div id="hdrMode" class="lv ok" style="border-color:#34d399">MODE L0 · NORMAL</div>
+</header>
+
+<nav class="flex flex-wrap gap-1 mb-4" id="tabs"></nav>
+
+<!-- MODUL 1 -->
+<section class="mod p p-4" id="m1">
+  <h2>Modul 1 · Neraca Sedimen &amp; SBI (2025–2056)</h2>
+  <div class="flex flex-wrap gap-4 my-3">
+    <div><div class="text-xs text-slate-500 mb-1">WADUK</div><div id="resBtns" class="flex gap-1"></div></div>
+    <div><div class="text-xs text-slate-500 mb-1">SKENARIO</div><div id="scBtns" class="flex gap-1"></div></div>
+  </div>
+  <div id="kpi1" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3"></div>
+  <div class="grid md:grid-cols-3 gap-3">
+    <div class="md:col-span-2 p p-3" style="height:340px"><canvas id="c1"></canvas></div>
+    <div class="p p-3 text-sm" id="cx1"></div>
+  </div>
+  <p class="text-xs text-slate-500 mt-2" id="fn1"></p>
+</section>
+
+<!-- MODUL 2 -->
+<section class="mod p p-4" id="m2">
+  <h2>Modul 2 · Kurva Kapasitas Hidup: PCHIP vs Polinomial Orde-5</h2>
+  <div class="flex flex-wrap gap-4 my-3 items-center">
+    <div id="hvBtns" class="flex gap-1"></div>
+    <label class="text-xs"><input type="checkbox" id="showP" checked> Polinomial orde-5 (tabel PJT I)</label>
+    <label class="text-xs"><input type="checkbox" id="showC" checked> PCHIP (V ≥ 0, monoton)</label>
+  </div>
+  <div id="kpi2" class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3"></div>
+  <div class="p p-3" style="height:380px"><canvas id="c2"></canvas></div>
+  <p class="text-xs text-slate-500 mt-2">Sumber titik: tabel H–V PJT I (Bening 2026, Lahor 2025). PCHIP dibangun dari titik tabel pada segmen monoton, dijangkar V = 0 pada elevasi dasar (perpotongan nol polinomial). Algoritma: Fritsch &amp; Carlson (1980).</p>
+</section>
+
+<!-- MODUL 3 -->
+<section class="mod p p-4" id="m3">
+  <h2>Modul 3 · Backtest Dynamic Rule Curve S6 (70 Bulan) &amp; Hibrida FPV 100 MWp</h2>
+  <div class="grid md:grid-cols-3 gap-3 mt-3">
+    <div class="md:col-span-2">
+      <div class="flex flex-wrap items-center gap-3 mb-2 text-xs">
+        <label class="btn cursor-pointer">Muat monthly_results.csv<input type="file" id="csv" accept=".csv" class="hidden"></label>
+        <span id="csvInfo" class="text-slate-500">Belum ada berkas dimuat. Kolom yang dikenali: tanggal/bulan, static, dynamic (Mm³).</span>
+      </div>
+      <div class="p p-3" style="height:320px"><canvas id="c3"></canvas></div>
+    </div>
+    <div class="p p-3">
+      <div class="text-xs text-slate-500">SKILL PRAKIRAAN ENSO ρ</div>
+      <div class="text-3xl text-cyan-400" id="rhoV">0,50</div>
+      <input type="range" id="rho" min="0" max="1" step="0.01" value="0.5">
+      <div class="relative h-3 mt-2 rounded" style="background:#1e3042"><div class="absolute h-3" style="left:44%;width:18%;background:#f59e0b"></div><div id="rhoM" class="absolute -top-1 h-5 w-1 bg-cyan-300" style="left:50%"></div></div>
+      <div class="flex justify-between text-xs text-slate-500"><span>0,00</span><span>zona impas 0,44–0,62</span><span>1,00</span></div>
+      <div id="rhoS" class="mt-2 text-sm"></div>
+    </div>
+  </div>
+  <div class="p p-3 mt-3">
+    <div class="flex flex-wrap items-center gap-3 mb-2"><div class="text-xs text-slate-500">SKENARIO HIDROLOGI FPV</div><div id="fpvBtns" class="flex gap-1"></div>
+      <div id="stormB" class="ml-auto text-xs ok">FPV: OPERASI NORMAL</div></div>
+    <div id="kpi3" class="grid grid-cols-2 md:grid-cols-4 gap-2"></div>
+    <p class="text-xs text-slate-500 mt-2">Neto = 156,0 GWh bruto (1.560 kWh/kWp) − 2,2 GWh konsumsi internal − penalti hidro HSRS/venting. FPV diperlakukan sebagai baseline PJT I; garis lantai kedalaman FPV 8 m = 33,87 Mm³.</p>
+  </div>
+</section>
+
+<!-- MODUL 4 -->
+<section class="mod p p-4" id="m4">
+  <h2>Modul 4 · Gerbang Kepatuhan Lingkungan Hilir (ΔSSC ≤ +25%)</h2>
+  <div class="grid md:grid-cols-2 gap-4 mt-3">
+    <div class="p p-4">
+      <div class="flex justify-between text-sm"><span>Konsentrasi latar C<sub>bg</sub></span><b id="cbgV" class="text-cyan-400"></b></div>
+      <input type="range" id="cbg" min="500" max="3000" step="50" value="1500">
+      <div class="flex justify-between text-sm mt-4"><span>Debit pengencer Q<sub>dil</sub></span><b id="qdV" class="text-cyan-400"></b></div>
+      <input type="range" id="qd" min="150" max="1500" step="10" value="600">
+      <div class="text-xs text-slate-500 mt-3">L<sub>izin</sub> = 0,25 · C<sub>bg</sub> · Q<sub>dil</sub>. Beban venting acuan: Q<sub>vent</sub> = 150 m³/s selama 24 jam = 38.880 ton (≈ 450 kg/s).</div>
+    </div>
+    <div class="p p-4">
+      <div id="gate" class="lv text-center text-lg mb-3"></div>
+      <div id="kpi4" class="grid grid-cols-2 gap-2"></div>
+      <div class="mt-3 text-xs text-slate-500">Beban venting vs beban diizinkan</div>
+      <div class="h-4 rounded relative" style="background:#1e3042"><div id="barL" class="h-4 rounded" style="width:0;background:#22d3ee"></div></div>
+      <div class="text-xs text-slate-500 mt-3">Intake PDAM/irigasi ditutup dengan notifikasi 12–24 jam. HSRS tidak dioperasikan saat musim kering (Q<sub>dil</sub> rendah).</div>
+    </div>
+  </div>
+</section>
+
+<!-- MODUL 5 -->
+<section class="mod p p-4" id="m5">
+  <h2>Modul 5 · Panel Fail-Safe L0–L3 &amp; Kelayakan Ekonomi Korporasi</h2>
+  <div id="lvBtns" class="flex flex-wrap gap-2 my-3"></div>
+  <div class="grid md:grid-cols-3 gap-3">
+    <div class="md:col-span-2 p p-3 overflow-x-auto">
+      <div class="text-xs mb-2" id="lvTrig"></div>
+      <table class="w-full"><thead><tr><th>Aktuator</th><th>Status</th></tr></thead><tbody id="act"></tbody></table>
+    </div>
+    <div class="p p-3" style="height:260px"><canvas id="c5"></canvas></div>
+  </div>
+  <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mt-3">
+    <div class="k"><span>CAPEX paket retrofit</span><b>Rp 369,6 M</b><i>Harga konstan 2026 · OPEX tunak 2036 Rp 35,3 M/th</i></div>
+    <div class="k"><span>ENPV (8%, 2027–2056)</span><b class="ok">+Rp 1.091 M</b><i>Kasus terburuk: +Rp 121 M</i></div>
+    <div class="k"><span>B/C</span><b>2,49</b><i>Terburuk 1,13</i></div>
+    <div class="k"><span>IRR</span><b>56,0%</b><i>Rentang 11,4%–81,5%</i></div>
+    <div class="k"><span>Payback</span><b>2031</b><i>Benchmark Djajasinga dkk. (2012): B/C 1,03 · IRR 17,35%</i></div>
+    <div class="k"><span>Biaya satuan neto</span><b>Rp 10.070/m³</b><i>Kotor Rp 26.700/m³</i></div>
+    <div class="k"><span>vs pengerukan mekanis</span><b class="ok">−84%</b><i>≈ Rp 61.200/m³</i></div>
+    <div class="k" style="border-left-color:#f59e0b"><span>Kas komersial murni</span><b class="wa">ENPV −Rp 275 M</b><i>B/C 0,62 · tanpa kredit pengerukan terhindar</i></div>
+  </div>
+  <p class="text-xs text-slate-500 mt-2">Catatan kejujuran: kelayakan korporasi bertumpu pada valuasi pengerukan terhindar (75,0 juta m³ × Rp 50.000/m³).</p>
+</section>
+
+<script>
+const HV={"bening":{"raw":[[87.0,-161789],[87.2,-86269],[87.3,-53264],[87.4,-23225],[87.5,3997],[87.6,28548],[87.7,50569],[87.8,70197],[87.9,87568],[88.0,102813],[88.1,116059],[88.2,127432],[88.3,137051],[88.4,145036],[88.5,151500],[88.6,156556],[88.7,160310],[88.8,162870],[88.9,164337],[89.0,164810],[89.1,164385],[89.2,163156],[89.3,161213],[89.4,158643],[89.5,155532],[89.6,151962],[89.7,148011],[89.8,143756],[89.9,139272],[90.0,134629],[90.1,129897],[90.2,125142],[90.3,120427],[90.4,115815],[90.5,111364],[90.6,107131],[90.9,96274],[91.0,93435],[91.1,91064],[91.2,89204],[91.8,90982],[91.9,93758],[92.2,106933],[92.3,113023],[92.4,120001],[92.5,127886],[93.0,181531]],"env":[[91.2,89204],[91.8,90982],[91.9,93758],[92.2,106933],[92.3,113023],[92.4,120001],[92.5,127886],[93.0,181531],[93.2,209891],[93.3,225594],[93.4,242326],[93.5,260092],[93.6,278899],[93.7,298752],[93.8,319656],[93.9,341612],[94.0,364624]],"z0":87.485},"lahor":{"raw":[[234.6,-80302],[235.1,-38037],[235.2,-28870],[235.5,-41],[235.6,9994],[235.7,20233],[235.8,30670],[235.9,41302],[236.2,74311],[236.4,97198],[236.5,108893],[236.6,120749],[236.7,132763],[236.8,144929],[236.9,157244],[237.0,169704],[237.1,182305],[237.2,195042],[237.3,207913],[237.4,220914],[237.5,234040],[237.6,247289],[237.7,260656],[237.8,274140],[237.9,287735],[238.0,301439],[238.1,315250],[238.2,329163],[238.3,343177],[238.4,357287],[238.5,371492],[238.6,385788],[238.7,400174],[238.8,414645],[239.1,458555],[239.3,488217],[239.4,503159],[239.5,518171],[239.6,533252],[239.7,548400]],"env":[[235.6,9994],[235.7,20233],[235.8,30670],[235.9,41302],[236.2,74311],[236.4,97198],[236.5,108893],[236.6,120749],[236.7,132763],[236.8,144929],[236.9,157244],[237.0,169704],[237.1,182305],[237.2,195042],[237.3,207913],[237.4,220914],[237.5,234040],[237.6,247289],[237.7,260656],[237.8,274140],[237.9,287735],[238.0,301439],[238.1,315250],[238.2,329163],[238.3,343177],[238.4,357287],[238.5,371492],[238.6,385788],[238.7,400174],[238.8,414645],[239.1,458555],[239.3,488217],[239.4,503159],[239.5,518171],[239.6,533252],[239.7,548400]],"z0":235.5}};
+const $=id=>document.getElementById(id);
+const fmt=(n,d=1)=>n.toLocaleString('id-ID',{minimumFractionDigits:d,maximumFractionDigits:d});
+Chart.defaults.color='#9fb3c6';Chart.defaults.borderColor='#1e3042';Chart.defaults.font.family='ui-monospace,Menlo,monospace';
+const ch={};
+function mk(id,cfg){if(ch[id])ch[id].destroy();ch[id]=new Chart($(id),cfg);return ch[id]}
+function btns(el,list,cur,fn){$(el).innerHTML='';list.forEach(t=>{const b=document.createElement('button');b.className='btn'+(t===cur?' on':'');b.textContent=t;b.onclick=()=>fn(t);$(el).appendChild(b)})}
+const k=(l,v,s='',c='')=>`<div class="k" ${c}><span>${l}</span><b>${v}</b><i>${s}</i></div>`;
+
+/* TABS */
+const TABS=['1 · Sedimen & SBI','2 · Kurva H–V','3 · Backtest S6 & FPV','4 · Gerbang ΔSSC','5 · Fail-Safe & Ekonomi'];
+const inited={};
+function tab(i){TABS.forEach((_,j)=>{$('m'+(j+1)).classList.toggle('on',j===i);$('tabs').children[j].classList.toggle('on',j===i)});
+  if(!inited[i]){inited[i]=1;[r1,r2,r3,r4,r5][i]()}else{Object.values(ch).forEach(c=>c.resize())}}
+TABS.forEach((t,i)=>{const b=document.createElement('button');b.className='tab';b.textContent=t;b.onclick=()=>tab(i);$('tabs').appendChild(b)});
+
+/* MODUL 1 */
+const R={
+ Sutami:{thr:101.2,thrL:'Ambang umur layanan 101,2 juta m³ (40% desain)',base:[135.773,101.01,56.77],bl:'2036',
+  sc:{'Retrofit N=5':{a:[135.773,116.62,105.33],sbi:'74,5%',life:'2056',dep:'0,837'},
+      'Ekspansi N=6':{a:[135.773,116.62,110.60],sbi:'86,4%',life:'>2060',dep:'—',proxy:1}}},
+ Lahor:{thr:null,base:[24.01,22.78,21.21],bl:'—',sc:{'Retrofit 1 jalur':{a:[24.01,24.25,24.11],sbi:'n/d',life:'—',dep:'n/d'}}},
+ Selorejo:{thr:25.05,thrL:'Ambang 50% desain 25,05 juta m³',base:[29.30,23.24,15.00],bl:'2033',
+  sc:{'Skenario A':{a:[29.30,28.08,22.79],sbi:'35,8%',life:'2045',dep:'0,378'},
+      'Skenario A+':{a:[29.30,29.72,25.45],sbi:'48,2%',life:'2052',dep:'n/d'}}}
+};
+const YR=Array.from({length:32},(_,i)=>2025+i);
+const ser=a=>YR.map(y=>y<=2036?a[0]+(a[1]-a[0])*(y-2025)/11:y<=2050?a[1]+(a[2]-a[1])*(y-2036)/14:Math.max(0,a[2]+(a[2]-a[1])/14*(y-2050)));
+let s1={r:'Sutami',s:'Baseline'};
+function r1(){
+  const R1=R[s1.r],scs=Object.keys(R1.sc);
+  if(s1.s!=='Baseline'&&!scs.includes(s1.s))s1.s='Baseline';
+  btns('resBtns',Object.keys(R),s1.r,t=>{s1={r:t,s:'Baseline'};r1()});
+  btns('scBtns',['Baseline',...scs],s1.s,t=>{s1.s=t;r1()});
+  const sc=R1.sc[s1.s],b=s1.s==='Baseline';
+  $('kpi1').innerHTML=
+    k('SBI',b?'0%':sc.sbi,b?'Tanpa intervensi':'Sediment Balance Index')+
+    k('Umur layanan',b?R1.bl:(R1.bl==='—'?'—':R1.bl+' → '+sc.life),R1.thr?R1.thrL:'Ambang tidak dikunci')+
+    k('Deposit neto',b?'—':sc.dep+' juta m³/th','Retrofit tanpa S1')+
+    k('V_eff 2036 / 2050',fmt((b?R1.base:sc.a)[1],2)+' / '+fmt((b?R1.base:sc.a)[2],2),'juta m³'+(sc&&sc.proxy?' · proksi':''));
+  const cx=$('cx1');
+  if(s1.r==='Selorejo')cx.innerHTML='<div class="text-xs text-slate-500">KOMPLEKS LAHOR–SUTAMI</div><p class="mt-2">Tidak berlaku. Selorejo berada di sub-sistem terpisah. Skenario A: S2 + ekskavasi stok delta X = 0,45 juta m³/th. A+: A + venting 20% fraksi halus, X = 0,60.</p>';
+  else cx.innerHTML='<div class="text-xs text-slate-500">KOMPLEKS LAHOR–SUTAMI (N=5, tanpa S1)</div>'+(b?'<p class="mt-2">Baseline: V_eff 123,8 (2036) → 78,0 (2050) juta m³; SCR 0,40 → 0,25.</p>':
+    `<div class="mt-2 space-y-2"><div class="k"><span>2036</span><b class="ok">+8,1 hari</b><i>V_eff 140,7 vs 123,8 · SCR 0,40 → 0,452</i></div><div class="k"><span>2050</span><b class="ok">+24,7 hari</b><i>V_eff 129,2 vs 78,0 · SCR 0,25 → 0,415</i></div><div class="text-xs text-slate-500">Layanan irigasi kemarau 24 m³/s</div></div>`);
+  const ds=[{label:'Baseline',data:ser(R1.base),borderColor:'#f87171',tension:.2,pointRadius:0}];
+  if(!b)ds.push({label:s1.s,data:ser(sc.a),borderColor:'#22d3ee',borderWidth:3,tension:.2,pointRadius:0});
+  if(R1.thr)ds.push({label:R1.thrL,data:YR.map(()=>R1.thr),borderColor:'#f59e0b',borderDash:[6,4],pointRadius:0});
+  mk('c1',{type:'line',data:{labels:YR,datasets:ds},options:{maintainAspectRatio:false,scales:{y:{title:{display:true,text:'V_eff (juta m³)'}}}}});
+  $('fn1').textContent='Garis menginterpolasi linear antar titik kunci 2025/2036/2050; perpotongan ambang tepat mengikuti keluaran model. '+(sc&&sc.proxy?'N=6 setelah 2036: proksi skala (1−SBI) dari N=5, menunggu results.json.':'');
+}
+
+/* MODUL 2 */
+function pchip(X,Y){const n=X.length,h=[],d=[],m=new Array(n);
+  for(let i=0;i<n-1;i++){h[i]=X[i+1]-X[i];d[i]=(Y[i+1]-Y[i])/h[i]}
+  for(let i=1;i<n-1;i++){if(d[i-1]*d[i]<=0)m[i]=0;else{const w1=2*h[i]+h[i-1],w2=h[i]+2*h[i-1];m[i]=(w1+w2)/(w1/d[i-1]+w2/d[i])}}
+  const end=(h0,h1,d0,d1)=>{let v=((2*h0+h1)*d0-h0*d1)/(h0+h1);if(Math.sign(v)!==Math.sign(d0))v=0;else if(Math.sign(d0)!==Math.sign(d1)&&Math.abs(v)>3*Math.abs(d0))v=3*d0;return v};
+  m[0]=end(h[0],h[1],d[0],d[1]);m[n-1]=end(h[n-2],h[n-3],d[n-2],d[n-3]);
+  return x=>{if(x<=X[0])return 0;let i=0;while(i<n-2&&x>X[i+1])i++;const t=(x-X[i])/h[i],t2=t*t,t3=t2*t;
+    return(2*t3-3*t2+1)*Y[i]+(t3-2*t2+t)*h[i]*m[i]+(-2*t3+3*t2)*Y[i+1]+(t3-t2)*h[i]*m[i+1]}}
+let s2='bening';
+const NM={bening:'Waduk Bening',lahor:'Waduk Lahor'},LK={bening:[87.40,-23224.91],lahor:[235.50,-40.88]};
+function r2(){
+  btns('hvBtns',['Waduk Bening','Waduk Lahor'],NM[s2],t=>{s2=t.includes('Bening')?'bening':'lahor';r2()});
+  const D=HV[s2],X=[D.z0,...D.env.map(p=>p[0])],Y=[0,...D.env.map(p=>p[1])],f=pchip(X,Y),xmax=X[X.length-1];
+  const cur=[];for(let e=D.raw[0][0];e<=xmax+1e-9;e+=0.05)cur.push({x:f(e),y:+e.toFixed(2)});
+  const poly=D.raw.filter(p=>p[0]<=xmax).map(p=>({x:p[1],y:p[0]}));
+  const mp=Math.min(...poly.map(p=>p.x)),mc=Math.min(...cur.map(p=>p.x));
+  const mono=cur.every((p,i)=>i===0||p.x>=cur[i-1].x-1e-6),pm=poly.every((p,i)=>i===0||p.x>=poly[i-1].x);
+  $('kpi2').innerHTML=
+    k('Titik negatif terkunci',fmt(LK[s2][1],2)+' m³','El. '+fmt(LK[s2][0],2)+' m (polinomial)','style="border-left-color:#f87171"')+
+    k('Minimum tabel (jendela)',fmt(mp,2)+' m³','Polinomial orde-5 · '+(pm?'monoton':'tidak monoton'),'style="border-left-color:#f87171"')+
+    k('Minimum PCHIP',fmt(mc,2)+' m³','V ≥ 0 '+(mc>=0?'✔':'✘'),'style="border-left-color:#34d399"')+
+    k('Monotonisitas PCHIP',mono?'Monoton ✔':'Gagal','Elevasi dasar '+fmt(D.z0,2)+' m');
+  const ds=[];
+  if($('showP').checked)ds.push({label:'Polinomial orde-5 (bug)',data:poly,borderColor:'#f87171',backgroundColor:'#f87171',showLine:true,pointRadius:2,borderWidth:2});
+  if($('showC').checked)ds.push({label:'PCHIP (V ≥ 0)',data:cur,borderColor:'#22d3ee',backgroundColor:'#22d3ee',showLine:true,pointRadius:0,borderWidth:3});
+  mk('c2',{type:'scatter',data:{datasets:ds},options:{maintainAspectRatio:false,animation:false,scales:{x:{title:{display:true,text:'Volume (m³)'},grid:{color:ctx=>ctx.tick.value===0?'#f59e0b':'#1e3042'}},y:{title:{display:true,text:'Elevasi (m)'}}}}});
+}
+$('showP').onchange=r2;$('showC').onchange=r2;
+
+/* MODUL 3 */
+const FLOOR=33.87,GW={dry:{n:'Kering ekstrem (El Niño)',net:153.8,pen:0},norm:{n:'Normal',net:148.8,pen:5.0},low:{n:'Batas bawah',net:122.2,pen:31.6}};
+let s3='dry',csvData=null;
+function c3(){
+  const lab=csvData?csvData.l:[],ds=[];
+  if(csvData){ds.push({label:'Static Replay',data:csvData.s,borderColor:'#f87171',pointRadius:0});ds.push({label:'Dynamic S6',data:csvData.d,borderColor:'#22d3ee',borderWidth:2,pointRadius:0})}
+  ds.push({label:'Lantai FPV 8 m = 33,87 Mm³',data:lab.length?lab.map(()=>FLOOR):[],borderColor:'#f59e0b',borderDash:[6,4],pointRadius:0});
+  mk('c3',{type:'line',data:{labels:lab,datasets:ds},options:{maintainAspectRatio:false,scales:{y:{title:{display:true,text:'Tampungan (Mm³)'}}},plugins:{title:{display:!csvData,text:'Muat monthly_results.csv untuk menampilkan 70 bulan (Jan 2021–Okt 2026)'}}}});
+}
+$('csv').onchange=e=>{const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=()=>{
+  const rows=r.result.trim().split(/\r?\n/).map(l=>l.split(/[;,]/).map(s=>s.trim()));const H=rows[0].map(h=>h.toLowerCase());
+  let is=H.findIndex(h=>h.includes('static')),id=H.findIndex(h=>h.includes('dynamic')),il=H.findIndex(h=>/date|tanggal|bulan|month/.test(h));
+  if(is<0)is=1;if(id<0)id=2;if(il<0)il=0;const B=rows.slice(1).filter(x=>x.length>id&&!isNaN(parseFloat(x[is])));
+  csvData={l:B.map(x=>x[il]),s:B.map(x=>parseFloat(x[is])),d:B.map(x=>parseFloat(x[id]))};
+  $('csvInfo').textContent=f.name+' · '+B.length+' baris dimuat (kolom: '+rows[0][il]+', '+rows[0][is]+', '+rows[0][id]+')';c3()};r.readAsText(f)};
+function rho(){const v=+$('rho').value;$('rhoV').textContent=fmt(v,2);$('rhoM').style.left=v*100+'%';
+  $('rhoS').innerHTML=v<0.44?'<span class="er">DI BAWAH ZONA IMPAS</span> · Dynamic S6 belum mengungguli Static Replay.':v<=0.62?'<span class="wa">ZONA TITIK IMPAS</span> · Dynamic S6 ≈ Static Replay (ρ = 0,44–0,62).':'<span class="ok">DI ATAS ZONA IMPAS</span> · Skill prakiraan cukup; Dynamic S6 unggul.'}
+$('rho').oninput=rho;
+function fpv(){
+  btns('fpvBtns',Object.values(GW).map(g=>g.n),GW[s3].n,t=>{s3=Object.keys(GW).find(x=>GW[x].n===t);fpv()});
+  const g=GW[s3],c24=g.net/(826.66-532.89)*100,c26=g.net*10/12/(653.58-540.36)*100;
+  $('kpi3').innerHTML=k('Energi neto FPV',fmt(g.net,1)+' GWh/th','156,0 − 2,2 − '+fmt(g.pen,1)+' penalti')+
+   k('Menutup defisit 2024',fmt(c24,1)+'%','vs 2025 · 293,77 GWh')+
+   k('Menutup kontraksi Jan–Okt 2026',fmt(c26,0)+'%','kontraksi 113,22 GWh · pro rata 10/12')+
+   k('Surplus Jan–Okt 2026',(g.net*10/12-113.22>=0?'+':'')+fmt(g.net*10/12-113.22,1)+' GWh','Penghematan evaporasi 0,78 juta m³/th');
+}
+function r3(){rho();fpv();c3()}
+
+/* MODUL 4 */
+function r4(){
+  const C=+$('cbg').value,Q=+$('qd').value,L=0.25*C*Q,LV=450000,fr=Math.min(1,L/LV),ds=LV/(C*Q)*100;
+  $('cbgV').textContent=fmt(C,0)+' mg/L';$('qdV').textContent=fmt(Q,0)+' m³/s';
+  const ok=L>=LV,g=$('gate');
+  g.textContent=ok?'IZIN BUKA HSRS/VENTING':'THROTTLE / TAHAN KATUP';g.style.color=ok?'#34d399':'#f87171';g.style.borderColor=ok?'#34d399':'#f87171';
+  $('kpi4').innerHTML=k('L_izin',fmt(L/1000,1)+' kg/s','0,25 · C_bg · Q_dil')+k('Beban venting','450,0 kg/s','38.880 ton / 24 jam')+
+   k('ΔSSC prediksi',fmt(ds,1)+'%',ds>25?'Melampaui +25% → L2':ds>20?'> 20% → setara L1 Advisory':'Di bawah batas +25%',ok?'':'style="border-left-color:#f87171"')+
+   k('Bukaan maks',fmt(fr*100,0)+'%','Pembatasan beban venting');
+  $('barL').style.width=Math.min(100,fr*100)+'%';$('barL').style.background=ok?'#34d399':'#f87171';
+}
+$('cbg').oninput=r4;$('qd').oninput=r4;
+
+/* MODUL 5 */
+const LV=[
+ {n:'L0 NORMAL',c:'#34d399',t:'MPC otomatis dalam batas pagar.',a:['OTOMATIS (dalam batas pagar)','SESUAI GERBANG ΔSSC','OPERASI','OPERASI NORMAL']},
+ {n:'L1 ADVISORY',c:'#facc15',t:'Pemicu: deviasi sensor > 6% atau ΔSSC > 20%. Butuh persetujuan operator.',a:['ADVISORY · menunggu persetujuan operator','TAHAN · persetujuan operator','OPERASI','OPERASI NORMAL']},
+ {n:'L2 MANUAL',c:'#f59e0b',t:'Pemicu: data putus > 15 menit atau ΔSSC > 25%. Kembali ke rule curve statis.',a:['MANUAL · rule curve statis','DITUTUP ≤ 5 menit','OPERASI','OPERASI NORMAL']},
+ {n:'L3 AMAN / STORM-MODE',c:'#f87171',t:'Pemicu: banjir/badai. HSRS fail-closed, tirai delta diturunkan, FPV storm-mode.',a:['MANUAL · mode aman','FAIL-CLOSED','DITURUNKAN','STORM-MODE (modul heksagonal)']}];
+const AC=['Kendali MPC AMERTA-TWIN','HSRS &amp; venting','Tirai delta','FPV 100 MWp'];
+let lvl=0;
+function setLv(i){lvl=i;const L=LV[i];
+  $('lvBtns').innerHTML=LV.map((l,j)=>`<button class="lv" style="border-color:${l.c};color:${j===i?'#0b141d':l.c};background:${j===i?l.c:'transparent'}" onclick="setLv(${j})">${l.n}</button>`).join('');
+  $('lvTrig').innerHTML=`<span style="color:${L.c}">●</span> ${L.t}`;
+  $('act').innerHTML=AC.map((a,j)=>`<tr><td>${a}</td><td style="color:${L.c}">${L.a[j]}</td></tr>`).join('');
+  const h=$('hdrMode');h.textContent='MODE '+L.n.replace(' ',' · ');h.style.color=L.c;h.style.borderColor=L.c;
+  const sb=$('stormB');sb.textContent='FPV: '+L.a[3];sb.style.color=i===3?'#f87171':'#34d399'}
+function r5(){setLv(lvl);
+  mk('c5',{type:'doughnut',data:{labels:['S2 Tirai Delta + sump','S3 HSRS + outlet dasar','S6 AMERTA-TWIN','Antarmuka FPV','Yard pasir','Kontinjensi 10%'],datasets:[{data:[85,165,60,14,12,33.6],backgroundColor:['#22d3ee','#38bdf8','#34d399','#facc15','#f59e0b','#64748b'],borderColor:'#0f1923'}]},
+   options:{maintainAspectRatio:false,plugins:{legend:{position:'bottom',labels:{boxWidth:10,font:{size:10}}},title:{display:true,text:'CAPEX Rp 369,6 M (miliar)'}}}});}
+setLv(0);tab(0);
+</script>
+</body>
+</html>
